@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <math.h>
+#include <string.h>
+#include <assert.h>
+#include <bsd/stdlib.h>
 
 
 typedef unsigned int uint_t;
@@ -23,7 +26,7 @@ void test(unsigned long max);
 void release_map(Bitmap map);
 Bitmap make_map(unsigned long max_val);
 void print_bitmap(Bitmap map);
-
+void generate_sample_values(uint_t max_val, size_t num_vals);
 
 
 Bitmap
@@ -142,6 +145,27 @@ print_bitmap(Bitmap map)
 
 }
 
+void
+generate_sample_values(uint_t max_val, size_t num_vals)
+{
+  assert(max_val > num_vals);
+
+  Bitmap tmp = make_map(max_val);
+
+  for (size_t i = 0; i < num_vals; i++){
+    word_t number = arc4random() % max_val+1;
+
+    while (bit_is_set(tmp, number))
+      number = arc4random() % max_val+1;
+
+    setbit(tmp, number);
+    printf("%u\n", number);
+
+  }
+
+  release_map(tmp);
+
+}
 
 int main(int argc, char **argv)
 {
@@ -150,6 +174,12 @@ int main(int argc, char **argv)
 
   unsigned long max_value = strtoul(argv[1], NULL, 0);
   
+  if (argc > 3 && strcmp(argv[2], "generate") == 0){
+    unsigned long number_to_generate = strtoul(argv[3], NULL, 0);
+    generate_sample_values(max_value, number_to_generate);
+    exit(0);
+  }
+
   printf("Testing....\n");
   test(max_value);
 }
