@@ -16,7 +16,7 @@ typedef struct {
 
 Bitmap setbit(Bitmap bitmap, uint_t val);
 Bitmap clearbit(Bitmap bitmap, uint_t val);
-int bit_is_set(Bitmap bitmap, uint_t val);
+word_t bit_is_set(Bitmap bitmap, uint_t val);
 void print_bits(word_t prefix, word_t x);
 void print_raw_bits(word_t x);
 void test(unsigned long max);
@@ -48,7 +48,7 @@ clearbit(Bitmap bitmap, uint_t val)
   return bitmap;
 }
 
-int
+word_t
 bit_is_set(Bitmap bitmap, uint_t val)
 {
   uint_t word = val / WORD_SIZE;
@@ -115,9 +115,13 @@ test(unsigned long max_val)
   print_bitmap(map);
 
   for (size_t i = 0; i < max_val+1; i++){ // Max val is inclusive
-    //    printf("%2d: %s\n", i, (bit_is_set(map, i)?"✔":"✘"));
+
+#ifdef PRETTY_OUTPUT
+    printf("%2d: %s\n", i, (bit_is_set(map, i)?"✔":"✘"));
+#else
     if (bit_is_set(map, i))
       printf("%d\n", i);
+#endif
   }
 
   release_map(map);
