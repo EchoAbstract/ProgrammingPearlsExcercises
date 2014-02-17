@@ -27,6 +27,7 @@ void release_map(Bitmap map);
 Bitmap make_map(unsigned long max_val);
 void print_bitmap(Bitmap map);
 void generate_sample_values(uint_t max_val, size_t num_vals);
+void process(unsigned long max);
 
 
 Bitmap
@@ -167,6 +168,36 @@ generate_sample_values(uint_t max_val, size_t num_vals)
 
 }
 
+void
+process(unsigned long max_val)
+{
+
+  Bitmap map = make_map(max_val);
+  char line[1024]; // This should be way bigger than we need
+  unsigned long tmp;
+
+  while (fgets(line, 1024, stdin)){
+    tmp = strtoul(line, NULL, 0);
+    setbit(map, tmp);
+  }
+
+#ifdef PRETTY_OUTPUT
+  print_bitmap(map);
+#endif
+
+  for (size_t i = 0; i < max_val+1; i++){ // Max val is inclusive
+
+#ifdef PRETTY_OUTPUT
+    printf("%2d: %s\n", i, (bit_is_set(map, i)?"✔":"✘"));
+#else
+    if (bit_is_set(map, i)) printf("%u\n", i);
+#endif
+  }
+
+  release_map(map);
+
+}
+
 int main(int argc, char **argv)
 {
   if (argc < 2)
@@ -180,6 +211,8 @@ int main(int argc, char **argv)
     exit(0);
   }
 
-  printf("Testing....\n");
-  test(max_value);
+  
+
+  process(max_value);
+  //  test(max_value);
 }
