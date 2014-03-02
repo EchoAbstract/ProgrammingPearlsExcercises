@@ -16,29 +16,25 @@ typedef struct {
   size_t num_words;
 } Bitmap;
 
-
-Bitmap setbit(Bitmap bitmap, uint_t val);
-Bitmap clearbit(Bitmap bitmap, uint_t val);
 word_t bit_is_set(Bitmap bitmap, uint_t val);
-void print_bits(word_t prefix, word_t x);
-void print_raw_bits(word_t x);
-void test(unsigned long max);
-void release_map(Bitmap map);
+Bitmap clearbit(Bitmap bitmap, uint_t val);
+void generate_sample_values(uint_t max_val, size_t num_vals);
 Bitmap make_map(unsigned long max_val);
 void print_bitmap(Bitmap map);
-void generate_sample_values(uint_t max_val, size_t num_vals);
+void print_bits(word_t prefix, word_t x);
+void print_raw_bits(word_t x);
 void process(unsigned long max);
+void release_map(Bitmap map);
+Bitmap setbit(Bitmap bitmap, uint_t val);
+void test(unsigned long max);
 
-
-Bitmap
-setbit(Bitmap bitmap, uint_t val)
+word_t
+bit_is_set(Bitmap bitmap, uint_t val)
 {
   uint_t word = val / WORD_SIZE;
   uint_t bit = val % WORD_SIZE;
 
-  bitmap.words[word] = bitmap.words[word] | (0x1 << bit);
-
-  return bitmap;
+  return bitmap.words[word] & ((~bitmap.words[word]) | (0x1 << bit));
 }
 
 Bitmap
@@ -50,100 +46,6 @@ clearbit(Bitmap bitmap, uint_t val)
   bitmap.words[word] = bitmap.words[word] ^ (0x1 << bit);
 
   return bitmap;
-}
-
-word_t
-bit_is_set(Bitmap bitmap, uint_t val)
-{
-  uint_t word = val / WORD_SIZE;
-  uint_t bit = val % WORD_SIZE;
-
-  return bitmap.words[word] & ((~bitmap.words[word]) | (0x1 << bit));
-}
-
-void
-print_bits(word_t prefix, word_t x)
-{
-  printf("%4u: ", prefix);
-  print_raw_bits(x);
-  printf("\n");
-}
-
-void
-print_raw_bits(word_t x)
-{
-  for (uint_t i = 31; i < 32; i--){
-    if ((x >> i) & 0x1) printf("1");
-    else                printf("0");
-  }
-}
-
-Bitmap
-make_map(unsigned long max_val)
-{
-  Bitmap map;
-
-  map.num_words = (size_t)ceil(max_val / (WORD_SIZE * 1.0));
-  map.words = calloc(map.num_words, sizeof(word_t));
-
-  return map;
-}
-
-void
-release_map(Bitmap map)
-{
-  if (map.words)
-    free(map.words);
-}
-
-void
-test(unsigned long max_val)
-{
-  Bitmap map = make_map(max_val);
-
-  print_bitmap(map);
-
-  map = setbit(map, 0);
-  map = setbit(map, 1);
-  map = setbit(map, 3);
-  map = setbit(map, 31);
-  map = setbit(map, 32);
-  map = setbit(map, 33);
-  map = setbit(map, 35);
-  map = setbit(map, 63);
-  
-  print_bitmap(map);
-
-  map = clearbit(map, 33);
-
-  print_bitmap(map);
-
-  for (size_t i = 0; i < max_val+1; i++){ // Max val is inclusive
-
-#ifdef PRETTY_OUTPUT
-    printf("%2d: %s\n", i, (bit_is_set(map, i)?"✔":"✘"));
-#else
-    if (bit_is_set(map, i))
-      printf("%d\n", i);
-#endif
-  }
-
-  release_map(map);
-}
-
-void
-print_bitmap(Bitmap map)
-{
-  for (size_t i = 0; i < map.num_words; i++){
-    print_bits(i, map.words[i]);
-  }
-
-  printf("Printing raw bitmap\n");
-  for (size_t i = map.num_words-1; i < map.num_words; i--){
-    print_raw_bits(map.words[i]);
-  }
-  printf("\n");
-
 }
 
 void
@@ -166,6 +68,49 @@ generate_sample_values(uint_t max_val, size_t num_vals)
 
   release_map(tmp);
 
+}
+
+Bitmap
+make_map(unsigned long max_val)
+{
+  Bitmap map;
+
+  map.num_words = (size_t)ceil(max_val / (WORD_SIZE * 1.0));
+  map.words = calloc(map.num_words, sizeof(word_t));
+
+  return map;
+}
+
+void
+print_bitmap(Bitmap map)
+{
+  for (size_t i = 0; i < map.num_words; i++){
+    print_bits(i, map.words[i]);
+  }
+
+  printf("Printing raw bitmap\n");
+  for (size_t i = map.num_words-1; i < map.num_words; i--){
+    print_raw_bits(map.words[i]);
+  }
+  printf("\n");
+
+}
+
+void
+print_bits(word_t prefix, word_t x)
+{
+  printf("%4u: ", prefix);
+  print_raw_bits(x);
+  printf("\n");
+}
+
+void
+print_raw_bits(word_t x)
+{
+  for (uint_t i = 31; i < 32; i--){
+    if ((x >> i) & 0x1) printf("1");
+    else                printf("0");
+  }
 }
 
 void
@@ -195,7 +140,59 @@ process(unsigned long max_val)
   }
 
   release_map(map);
+}
 
+void
+release_map(Bitmap map)
+{
+  if (map.words)
+    free(map.words);
+}
+
+Bitmap
+setbit(Bitmap bitmap, uint_t val)
+{
+  uint_t word = val / WORD_SIZE;
+  uint_t bit = val % WORD_SIZE;
+
+  bitmap.words[word] = bitmap.words[word] | (0x1 << bit);
+
+  return bitmap;
+}
+
+void
+test(unsigned long max_val)
+{
+  Bitmap map = make_map(max_val);
+
+  print_bitmap(map);
+
+  map = setbit(map, 0);
+  map = setbit(map, 1);
+  map = setbit(map, 3);
+  map = setbit(map, 31);
+  map = setbit(map, 32);
+  map = setbit(map, 33);
+  map = setbit(map, 35);
+  map = setbit(map, 63);
+
+  print_bitmap(map);
+
+  map = clearbit(map, 33);
+
+  print_bitmap(map);
+
+  for (size_t i = 0; i < max_val+1; i++){ // Max val is inclusive
+
+#ifdef PRETTY_OUTPUT
+    printf("%2d: %s\n", i, (bit_is_set(map, i)?"✔":"✘"));
+#else
+    if (bit_is_set(map, i))
+      printf("%d\n", i);
+#endif
+  }
+
+  release_map(map);
 }
 
 int main(int argc, char **argv)
@@ -211,8 +208,5 @@ int main(int argc, char **argv)
     exit(0);
   }
 
-  
-
   process(max_value);
-  //  test(max_value);
 }
